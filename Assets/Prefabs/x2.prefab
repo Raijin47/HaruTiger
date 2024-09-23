@@ -85,7 +85,7 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
+  m_MaskInteraction: 1
   m_SpriteSortPoint: 0
 --- !u!61 &4777754638422901401
 BoxCollider2D:
@@ -158,7 +158,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 4
+  m_Constraints: 5
 --- !u!114 &86236515059219922
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -171,7 +171,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70ba2420c62d57548917de11094df1ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Size: 0
-  Transform: {fileID: 6049897910413099055}
-  MinX: -3
-  MaxX: 3
+  _size: 2
+  _min: -3
+  _max: 3
