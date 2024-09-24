@@ -1,17 +1,25 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TilesController : MonoBehaviour
 {
     [SerializeField] private TileIllusion _illusion;
     [SerializeField] private Tile[] _tiles;
+    [SerializeField] private Transform _content;
+    [SerializeField] private TileData[] _data;
 
     public static Action<Tile> OnStartMove;
     public static Action<Tile> OnEndMove;
 
     private Camera _camera;
     private Coroutine _movementTileProcess;
+
+    private readonly List<Tile> UsedTile = new();
+    private readonly List<Tile> FreeTile = new();
+
+    private bool _isStop = false;
 
     private void Awake()
     {
@@ -22,10 +30,45 @@ public class TilesController : MonoBehaviour
     {
         OnStartMove += StartMovement;
         OnEndMove += StopMovement;
+        _ = StartCoroutine(StartGame());
+    }
+
+    private IEnumerator StartGame()
+    {
+        CreateNewRow();
+        ActivateRow();
+        yield return new WaitForSeconds(0.5f);
+        CreateNewRow();
+    }
+
+    private void CreateNewRow()
+    {
+        int random = UnityEngine.Random.Range(0, _data.Length);
+
+        var data = _data[random];
+
+        for (int i = 0; i < data.Tiles.Length; i++)
+        {
+            var obj = Instantiate(data.Tiles[i], _content);
+            obj.Init();
+            obj.Transform.localPosition = data.Position[i];
+            FreeTile.Add(obj);
+        }
+    }
+
+    private void ActivateRow()
+    {
+        for (int i = FreeTile.Count - 1; i >= 0; i--)
+        {
+            FreeTile[i].Rigidbody.simulated = true;
+            UsedTile.Add(FreeTile[i]);
+            FreeTile.Remove(FreeTile[i]);
+        }
     }
 
     private void StartMovement(Tile tile)
     {
+        if (_isStop) return;
         _illusion.Tile = tile;
         _illusion.gameObject.SetActive(true);
         _illusion.Transform.localPosition = tile.Transform.localPosition;
@@ -50,7 +93,8 @@ public class TilesController : MonoBehaviour
         if (tile.Transform.localPosition.x != _illusion.Transform.localPosition.x)
         {
             tile.Transform.localPosition = _illusion.Transform.localPosition;
-            MoveRow();
+            _isStop = true;
+            StartCoroutine(MovementRowCoroutine(tile));
         }
 
         _illusion.gameObject.SetActive(false);
@@ -65,26 +109,20 @@ public class TilesController : MonoBehaviour
         }
     }
 
-    private void MoveRow()
+    private IEnumerator MovementRowCoroutine(Tile tile)
     {
-        StartCoroutine(MovementRowCoroutine());
-    }
-    [SerializeField] private Transform _element;
+        yield return new WaitForSeconds(0.2f);
 
-    private IEnumerator MovementRowCoroutine()
-    {
-        float elapsedSize = 1;
+        while(tile.Rigidbody.velocity.y != 0) yield return null;
 
-        while(_element.transform.localScale.y < 3.5)
+        foreach (Tile obj in UsedTile)
         {
-            elapsedSize += Time.deltaTime * 5;
-            _element.localScale = Vector2.one * elapsedSize;
-            yield return null;
+            obj.Rigidbody.position += Vector2.up;
         }
 
-        Debug.Log("continue");
+        ActivateRow();
+        CreateNewRow();
 
-        _element.localScale = Vector2.one;
-
+        _isStop = false;
     }
 }

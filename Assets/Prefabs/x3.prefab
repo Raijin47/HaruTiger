@@ -130,7 +130,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 2.9, y: 0.984127}
+  m_Size: {x: 2.9, y: 0.99}
   m_EdgeRadius: 0
 --- !u!50 &6038652987117578539
 Rigidbody2D:
@@ -141,7 +141,7 @@ Rigidbody2D:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6658347500647169717}
   m_BodyType: 0
-  m_Simulated: 1
+  m_Simulated: 0
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
