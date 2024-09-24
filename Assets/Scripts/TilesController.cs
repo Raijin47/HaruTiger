@@ -81,9 +81,9 @@ public class TilesController : MonoBehaviour
     {
         while (true)
         {
+            yield return null;
             float horizontal = _camera.ScreenToWorldPoint(Input.mousePosition).x;
             _illusion.Transform.localPosition = new Vector2(Mathf.Clamp(Mathf.Floor(horizontal), _illusion.Min, _illusion.Max), _illusion.Transform.localPosition.y);
-            yield return null;
         }
     }
 
@@ -113,7 +113,7 @@ public class TilesController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.2f);
 
-        while(tile.Rigidbody.velocity.y != 0) yield return null;
+        while(IsActiveVelocity()) yield return null;
 
         foreach (Tile obj in UsedTile)
         {
@@ -124,5 +124,16 @@ public class TilesController : MonoBehaviour
         CreateNewRow();
 
         _isStop = false;
+    }
+
+    private bool IsActiveVelocity()
+    {
+        foreach (Tile tile in UsedTile)
+        {
+            if (tile.Rigidbody.velocity.y != 0)
+                return true;
+        }
+
+        return false;
     }
 }
