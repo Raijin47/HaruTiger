@@ -18,6 +18,7 @@ public class TileIllusion : MonoBehaviour
     private readonly Color ActiveColor = new(0.8f, 0.8f, 0.8f, 0.8f);
     private const float Distance = 8;
     private bool onBlockAction;
+    private bool onGameActive = false;
 
     private void Awake()
     {
@@ -28,9 +29,11 @@ public class TileIllusion : MonoBehaviour
 
     private void Start()
     {
-        Game.Instance.Action.OnStartMovement += StartMovement;
-        Game.Instance.Action.OnEndMovement += StopMovement;
-        Game.Instance.Action.OnBlockAction += (bool value) => { onBlockAction = value; };
+        Game.Action.OnStartGame += () => { onGameActive = true; };
+        Game.Action.OnGameOver += () => { onGameActive = false; };
+        Game.Action.OnStartMovement += StartMovement;
+        Game.Action.OnEndMovement += StopMovement;
+        Game.Action.OnBlockAction += (bool value) => { onBlockAction = value; };
     }
 
     private void View(Tile tile)
@@ -62,6 +65,7 @@ public class TileIllusion : MonoBehaviour
 
     private void StartMovement(Tile tile)
     {
+        if (!onGameActive) return; 
         if (onBlockAction) return;
 
         _currentTile = tile;
@@ -84,7 +88,8 @@ public class TileIllusion : MonoBehaviour
 
     private void StopMovement(Tile tile)
     {
-        if(onBlockAction) return;
+        if (!onGameActive) return;
+        if (onBlockAction) return;
 
         if (_currentTile == null) return;
 
@@ -95,7 +100,7 @@ public class TileIllusion : MonoBehaviour
         if (tile.Transform.localPosition.x != _transform.localPosition.x)
         {
             tile.Transform.localPosition = _transform.localPosition;
-            Game.Instance.Action.OnEndMove?.Invoke();
+            Game.Action.OnEndMove?.Invoke();
         }
 
         tile.Color = Color.white;

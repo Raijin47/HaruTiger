@@ -46,16 +46,19 @@ public class Tile : MonoBehaviour
 
     private void OnMouseUp()
     {
-        Game.Instance.Action.OnEndMovement?.Invoke(this);
+        Game.Action.OnEndMovement?.Invoke(this);
     }
 
     private void OnMouseDown() 
     {
-        Game.Instance.Action.OnStartMovement?.Invoke(this);
+        Game.Action.OnStartMovement?.Invoke(this);
     }
 
     public void Release()
     {
+        Game.Wallet.Add(_size);
+        Game.Record.Add(_size * 5);
+        Game.Action.OnEndFalling?.Invoke(this);
         Destroy(gameObject);
     }
 
@@ -95,8 +98,8 @@ public class Tile : MonoBehaviour
     {
         if (OnAction == onAction) return;
         OnAction = onAction;
-        if (OnAction) Game.Instance.Action.OnStartFalling?.Invoke(this);
-        else Game.Instance.Action.OnEndFalling?.Invoke(this);
+        if (OnAction) Game.Action.OnStartFalling?.Invoke(this);
+        else Game.Action.OnEndFalling?.Invoke(this);
     }
 
     private IEnumerator UpdateProcessCoroutine()

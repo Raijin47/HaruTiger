@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class TilesController : MonoBehaviour
 {
+    [SerializeField] private GameObject _gameOverPanel;
     [SerializeField] private Transform _content;
     [SerializeField] private TilesFactory _factory;
     [SerializeField] private TileData[] _data;
@@ -13,6 +14,7 @@ public class TilesController : MonoBehaviour
 
     private readonly Vector2 _startCheckPosition = new(0, 9);
     private readonly Vector2 _checkSize = new(7,0.5f);
+    private readonly Vector2 GameOverZone = new(0, 10);
 
     private readonly WaitForSeconds Interval = new(.2f);
 
@@ -24,15 +26,26 @@ public class TilesController : MonoBehaviour
 
     private void Start()
     {
-        StartGame();
-        Game.Instance.Action.OnEndMove += StartAction;
-        Game.Instance.Action.OnStartFalling += AddFallingTile;
-        Game.Instance.Action.OnEndFalling += RemovedFallingTile;
+        Game.Action.OnStartGame += StartGame;
+        Game.Action.OnEndMove += StartAction;
+        Game.Action.OnStartFalling += AddFallingTile;
+        Game.Action.OnEndFalling += RemovedFallingTile;
     }
 
     private void StartGame()
     {
-        for(int i = 0; i < 3; i++)
+        for (int i = ActiveTile.Count - 1; i >= 0; i--)
+            Destroy(ActiveTile[i].gameObject);
+        
+
+        for (int i = PreviewTile.Count - 1; i >= 0; i--)
+            Destroy(PreviewTile[i].gameObject);
+
+        ActiveTile.Clear();
+        PreviewTile.Clear();
+        FallingTile.Clear();
+
+        for (int i = 0; i < 3; i++)
         {
             CreateNewRow();
             RiseTile();
@@ -86,7 +99,7 @@ public class TilesController : MonoBehaviour
 
     private IEnumerator ActionProcessCoroutine()
     {
-        Game.Instance.Action.OnBlockAction?.Invoke(true);
+        Game.Action.OnBlockAction?.Invoke(true);
 
         yield return Interval;
         while (FallingTile.Count != 0) yield return null;
@@ -97,11 +110,15 @@ public class TilesController : MonoBehaviour
         RiseTile();
         CreateNewRow();
 
+
+
         yield return Interval;
         yield return RemoveTileProcessCoroutine();
         yield return Interval;
 
-        Game.Instance.Action.OnBlockAction?.Invoke(false);
+        CheckGameOver();
+
+        Game.Action.OnBlockAction?.Invoke(false);
     }
 
     private IEnumerator RemoveTileProcessCoroutine()
@@ -129,6 +146,7 @@ public class TilesController : MonoBehaviour
             {
                 _particle.transform.position = pos;
                 _particle.Play();
+                Game.Action.OnBonus?.Invoke();
                 for (int b = 0; b < col.Length; b++)
                 {
                     if (!col[b]) break;
@@ -154,6 +172,17 @@ public class TilesController : MonoBehaviour
             yield return Interval;
             while (FallingTile.Count != 0) yield return null;
             yield return RemoveTileProcessCoroutine();
+        }
+    }
+
+
+    private void CheckGameOver()
+    {
+        if(Physics2D.BoxCast(GameOverZone, _checkSize, 0, Vector2.zero))
+        {
+            _gameOverPanel.SetActive(true);
+            Game.Audio.OnGameOver();
+            Game.Action.OnGameOver?.Invoke();
         }
     }
 }

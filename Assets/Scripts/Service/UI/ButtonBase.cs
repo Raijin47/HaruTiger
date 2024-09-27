@@ -14,18 +14,18 @@ public class ButtonBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
     private RectTransform _rectTransform;
     private readonly Vector2 PressedSize = new(0.9f, 0.9f);
     private const float ResizeDuration = 0.2f;
-    private Vector2 _currentSize;
+    private Vector2 _defaultSize;
     private Coroutine _resizeCoroutine; 
 
     private void Awake()
     {
         _rectTransform ??= GetComponent<RectTransform>();
-        _currentSize = _rectTransform.localScale;
+        _defaultSize = _rectTransform.localScale;
     }
 
     void IPointerDownHandler.OnPointerDown(PointerEventData eventData)
     {
-        if (_resizeCoroutine != null)
+        if (_resizeCoroutine != null)      
             StopCoroutine(_resizeCoroutine);
 
         _resizeCoroutine = StartCoroutine(ResizeButton(PressedSize));
@@ -36,18 +36,18 @@ public class ButtonBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         if (_resizeCoroutine != null)
             StopCoroutine(_resizeCoroutine);
 
-        _resizeCoroutine = StartCoroutine(ResizeButton(_currentSize));
+        _resizeCoroutine = StartCoroutine(ResizeButton(_defaultSize));
     }
 
     void IPointerClickHandler.OnPointerClick(PointerEventData eventData)
     {
         OnClick?.Invoke();
-        Game.Instance.Audio.OnClick();
+        Game.Audio.OnClick();
     }
 
     private void OnEnable()
     {
-        _rectTransform.localScale = _currentSize;
+        _rectTransform.localScale = _defaultSize;
     }
 
     private IEnumerator ResizeButton(Vector2 targetSize)
