@@ -24,7 +24,7 @@ public class Level : MonoBehaviour
 
     private void Set()
     {
-        int current = Mathf.Clamp(Game.Score.Score / 100, 1, 100);
+        int current = Mathf.Clamp(Game.Score.Score / 200, 1, 100);
 
         _textGame.text = $"{current}";
         _textEnd.text = $"Level: {current}";

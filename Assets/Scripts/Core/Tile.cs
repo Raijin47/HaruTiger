@@ -59,7 +59,8 @@ public class Tile : MonoBehaviour
         MultyWallet wallet = Game.Wallet as MultyWallet;
         wallet.AddMulty(_id);
 
-        Game.Action.OnEndFalling?.Invoke(this);
+        TilesController.Instance.RemoveActiveTile(this);
+
         Destroy(gameObject);
     }
 

@@ -3,13 +3,17 @@ using UnityEngine;
 
 public class TileIllusion : MonoBehaviour
 {
+    public static TileIllusion Instance;
+
     [SerializeField] private float _speed;
+    [SerializeField] private Sprite _destroySprite;
 
     private SpriteRenderer _sprite;
+    private BoxCollider2D _collider;
 
     private Transform _transform;
-    public float _min;
-    public float _max;
+    public float _min { get; set; }
+    public float _max { get; set; }
 
     private Tile _currentTile;
     private Camera _camera;
@@ -19,22 +23,95 @@ public class TileIllusion : MonoBehaviour
     private const float Distance = 8;
     private bool onBlockAction;
     private bool onGameActive = false;
+    private bool onDestroy = false;
 
     private void Awake()
     {
+        _collider = GetComponent<BoxCollider2D>();
         _camera = Camera.main;
         _sprite = GetComponent<SpriteRenderer>();
         _transform = transform;
+        Instance = this;
     }
 
     private void Start()
     {
-        Game.Action.OnStartGame += () => { onGameActive = true; };
+        Game.Action.OnStartGame += () => { onGameActive = true; onDestroy = false; };
         Game.Action.OnGameOver += () => { onGameActive = false; };
         Game.Action.OnStartMovement += StartMovement;
         Game.Action.OnEndMovement += StopMovement;
         Game.Action.OnBlockAction += (bool value) => { onBlockAction = value; };
     }
+
+    private readonly Vector2 destroyPos = new (-1, 6);
+
+    public void SetDestroyAction()
+    {
+        onDestroy = true;
+        _collider.enabled = true;
+        _transform.localPosition = destroyPos;
+        _sprite.sprite = _destroySprite;
+    }
+
+    private void OnMouseDown()
+    {
+        if (onDestroy) 
+        {
+            ReleaseCoroutine();
+            _movementTileProcess = StartCoroutine(MovementDestroyProcess());
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawWireCube(transform.position + Vector3.right * 0.5f, new Vector2(5,5));
+    }
+
+    private void OnMouseUp()
+    {
+        if (onDestroy)
+        {
+            onDestroy = false;
+            ReleaseCoroutine();
+            _collider.enabled = false;
+
+            RaycastHit2D[] hit = Physics2D.BoxCastAll(_transform.position + Vector3.right * 0.5f, new Vector2(5, 5), 0, Vector2.zero);
+
+            for (int i = 0; i < hit.Length; i++)
+            {
+                if(hit[i].collider.TryGetComponent(out Tile tile))
+                {
+                    tile.Release();
+                }
+            }
+
+            TilesController.Instance.AddRow();
+
+            _transform.localPosition = new Vector2(0, 15);
+        }
+    }
+
+    private const float _minX = -2;
+    private const float _maxX = 1;
+    private const float _minY = 2;
+    private const float _maxY = 7;
+
+    private IEnumerator MovementDestroyProcess()
+    {
+        while (true)
+        {
+            float horizontal = _camera.ScreenToWorldPoint(Input.mousePosition).x;
+            float vertical = _camera.ScreenToWorldPoint(Input.mousePosition).y;
+
+            horizontal = Mathf.Clamp(Mathf.Floor(horizontal), _minX, _maxX);
+            vertical = Mathf.Clamp(Mathf.Round(vertical), _minY, _maxY);
+
+            Vector2 target = new(horizontal, vertical);
+            _transform.localPosition = Vector2.Lerp(_transform.localPosition, target, Time.deltaTime * _speed);
+            yield return null;
+        }
+    }
+
 
     private void View(Tile tile)
     {
@@ -67,6 +144,7 @@ public class TileIllusion : MonoBehaviour
     {
         if (!onGameActive) return; 
         if (onBlockAction) return;
+        if (onDestroy) return;
 
         _currentTile = tile;
         View(tile);
@@ -90,6 +168,7 @@ public class TileIllusion : MonoBehaviour
     {
         if (!onGameActive) return;
         if (onBlockAction) return;
+      
 
         if (_currentTile == null) return;
 
@@ -105,7 +184,7 @@ public class TileIllusion : MonoBehaviour
 
         tile.Color = Color.white;
         _currentTile = null;
-        _transform.localPosition = new Vector2(0, 11);
+        _transform.localPosition = new Vector2(0, 15);
     }
 
     private void ReleaseCoroutine()

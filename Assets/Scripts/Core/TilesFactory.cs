@@ -21,4 +21,9 @@ public class TilesFactory
             _ => throw new NotImplementedException()
         };
     }
+
+    public Tile GetOne(int id)
+    {
+        return _x1[id];
+    }
 }

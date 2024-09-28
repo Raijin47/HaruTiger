@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class TilesController : MonoBehaviour
 {
+    public static TilesController Instance;
+
+    
     [SerializeField] private GameObject _gameOverPanel;
     [SerializeField] private Transform _content;
     [SerializeField] private TilesFactory _factory;
@@ -24,12 +27,88 @@ public class TilesController : MonoBehaviour
 
     private readonly int _countCheck = 10;
 
+    private void Awake()
+    {
+        Instance = this;
+    }
+
     private void Start()
     {
         Game.Action.OnStartGame += StartGame;
         Game.Action.OnEndMove += StartAction;
         Game.Action.OnStartFalling += AddFallingTile;
         Game.Action.OnEndFalling += RemovedFallingTile;
+    }
+
+    public void RemoveActiveTile(Tile tile)
+    {
+        ActiveTile.Remove(tile);
+        FallingTile.Remove(tile);
+    }
+
+    public bool Slice()
+    {
+        List<Tile> slicing = new();
+
+        foreach (Tile tile in ActiveTile)        
+            if (tile.Size == 4)      
+                slicing.Add(tile);
+                
+        if(slicing.Count != 0)
+        {
+            for(int i = slicing.Count - 1; i >= 0; i--)
+            {
+                FallingTile.Remove(slicing[i]);
+                ActiveTile.Remove(slicing[i]);
+
+                int r = Random.Range(0, 1);
+                Vector2 pos = slicing[i].Transform.position + Vector3.left * 3;
+
+                for(int a = 0; a < 4; a++)
+                {
+                    var tile = Instantiate(_factory.GetOne(r), _content);
+                    tile.Init();
+                    ActiveTile.Add(tile);
+                    tile.Collider.enabled = true;
+                    pos += Vector2.right;
+                    tile.Transform.localPosition = pos;
+                }
+
+                slicing[i].Release();
+            }
+
+            AddRow();
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool DestroyRandom()
+    {
+        if (ActiveTile.Count != 0)
+        {
+            List<Tile> destroy = new();
+
+            int r = ActiveTile[Random.Range(0, ActiveTile.Count - 1)].Size;
+
+
+            foreach (Tile tile in ActiveTile)
+                if (tile.Size == r)
+                    destroy.Add(tile);
+
+            for (int i = destroy.Count - 1; i >= 0; i--)
+            {
+                FallingTile.Remove(destroy[i]);
+                ActiveTile.Remove(destroy[i]);
+
+                destroy[i].Release();
+            }
+
+            AddRow();
+            return true;
+        }
+        else return false;
     }
 
     private void StartGame()
@@ -147,8 +226,8 @@ public class TilesController : MonoBehaviour
                 _particle.transform.position = pos;
                 _particle.Play();
 
-                Game.Wallet.Add(5);
-                Game.Score.Add(20);
+                Game.Wallet.Add(8);
+                Game.Score.Add(40);
                 Game.Action.OnBonus?.Invoke();
                 for (int b = 0; b < col.Length; b++)
                 {
@@ -178,6 +257,14 @@ public class TilesController : MonoBehaviour
         }
     }
 
+    public void AddRow()
+    {
+        if(ActiveTile.Count == 0)
+        {
+            RiseTile();
+            CreateNewRow();
+        }
+    }
 
     private void CheckGameOver()
     {
