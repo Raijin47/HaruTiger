@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 
 [Serializable]
-public abstract class AudioSettingsBase
+public abstract class AudioSettings
 {
     [SerializeField] protected AudioMixerGroup _mixer;
 

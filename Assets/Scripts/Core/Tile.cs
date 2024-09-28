@@ -56,8 +56,9 @@ public class Tile : MonoBehaviour
 
     public void Release()
     {
-        Game.Wallet.Add(_size);
-        Game.Record.Add(_size * 5);
+        MultyWallet wallet = Game.Wallet as MultyWallet;
+        wallet.AddMulty(_id);
+
         Game.Action.OnEndFalling?.Invoke(this);
         Destroy(gameObject);
     }

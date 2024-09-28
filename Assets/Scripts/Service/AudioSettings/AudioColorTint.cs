@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class AudioColorTint : AudioSettingsBase
+public class AudioColorTint : AudioSettings
 {
     [SerializeField] private Sprite _onSprite;
     [SerializeField] private Sprite _offSprite;

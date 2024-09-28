@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class GameRecord
+public class GameScore
 {
     public event Action OnAddScore;
     public event Action OnResetScore;
@@ -22,7 +22,11 @@ public class GameRecord
         Game.Action.OnStartGame += StartGame;
     }
 
-    private void StartGame() => OnResetScore?.Invoke();
+    private void StartGame() 
+    {
+        _score = 0;
+        OnResetScore?.Invoke();
+    } 
 
     public void Add(int value)
     {

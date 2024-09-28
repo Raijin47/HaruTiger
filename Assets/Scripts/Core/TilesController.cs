@@ -146,6 +146,9 @@ public class TilesController : MonoBehaviour
             {
                 _particle.transform.position = pos;
                 _particle.Play();
+
+                Game.Wallet.Add(5);
+                Game.Score.Add(20);
                 Game.Action.OnBonus?.Invoke();
                 for (int b = 0; b < col.Length; b++)
                 {

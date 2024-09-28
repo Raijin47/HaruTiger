@@ -15,24 +15,24 @@ public class ScoreView : MonoBehaviour
 
     private void Start()
     {
-        Game.Record.OnResetScore += ResetScore;
-        Game.Record.OnAddScore += Add;
+        Game.Score.OnResetScore += ResetScore;
+        Game.Score.OnAddScore += Add;
     }
 
     private void OnEnable()
     {
-        if (Game.Record != null)
+        if (Game.Score != null)
         {
-            Game.Record.OnResetScore += ResetScore;
-            Game.Record.OnAddScore += Add;
-            Set(Game.Record.Score);
+            Game.Score.OnResetScore += ResetScore;
+            Game.Score.OnAddScore += Add;
+            Set(Game.Score.Score);
         }
     }
 
     private void OnDisable()
     {
-        Game.Record.OnAddScore -= Add;
-        Game.Record.OnResetScore -= ResetScore;
+        Game.Score.OnAddScore -= Add;
+        Game.Score.OnResetScore -= ResetScore;
 
         if (_changeProcess != null)
         {
@@ -42,7 +42,15 @@ public class ScoreView : MonoBehaviour
 
     }
 
-    private void ResetScore() => Set(0);
+    private void ResetScore() 
+    {
+        if (_changeProcess != null)
+        {
+            StopCoroutine(_changeProcess);
+            _changeProcess = null;
+        }
+        Set(0);
+    } 
 
     private void Set(float value)
     {
@@ -65,12 +73,12 @@ public class ScoreView : MonoBehaviour
 
     private IEnumerator AddScoreProcess()
     {
-        while (_current < Game.Record.Score)
+        while (_current < Game.Score.Score)
         {
-            Set(Mathf.Lerp(_current, Game.Record.Score, Time.deltaTime * Speed));
+            Set(Mathf.Lerp(_current, Game.Score.Score, Time.deltaTime * Speed));
             yield return null;
         }
 
-        Set(Game.Record.Score);
+        Set(Game.Score.Score);
     }
 }

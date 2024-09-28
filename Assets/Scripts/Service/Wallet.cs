@@ -2,20 +2,20 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class GameWallet
+public class Wallet
 {
     public event Action<float> OnSetMoney;
     public event Action OnAddMoney;
     public event Action OnSpendMoney;
 
-    [SerializeField] private int _money;
+    [SerializeField] protected int _money;
     [SerializeField] private int _starting;
 
-    private readonly string SaveName = "Money";
+    protected readonly string SaveName = "Money";
 
     public int Money => _money;
 
-    public void Init()
+    public virtual void Init()
     {
         _money = PlayerPrefs.GetInt(SaveName, _starting);
         OnSetMoney?.Invoke(_money);
@@ -40,5 +40,5 @@ public class GameWallet
         else return false;
     }
 
-    private void Save() => PlayerPrefs.SetInt(SaveName, _money);
+    protected void Save() => PlayerPrefs.SetInt(SaveName, _money);
 }

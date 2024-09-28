@@ -1,6 +1,7 @@
+using System;
 
-[System.Serializable]
+[Serializable]
 public abstract class Component
 {
-
+    public abstract void Init();
 }

@@ -15,9 +15,9 @@ public class RecordView : MonoBehaviour
 
     private void OnEnable()
     {
-        Set(Game.Record.Record);
+        Set(Game.Score.Record);
 
-        if(Game.Record.GetRecord())
+        if(Game.Score.GetRecord())
         {
             if (_changeProcess != null)
             {
@@ -46,12 +46,12 @@ public class RecordView : MonoBehaviour
 
     private IEnumerator UpdateRecordProcess()
     {
-        while (_current < Game.Record.Record)
+        while (_current < Game.Score.Record)
         {
-            Set(Mathf.Lerp(_current, Game.Record.Record, Time.deltaTime * Speed));
+            Set(Mathf.Lerp(_current, Game.Score.Record, Time.deltaTime * Speed));
             yield return null;
         }
 
-        Set(Game.Record.Record);
+        Set(Game.Score.Record);
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [Serializable]
-public class AudioSlider : AudioSettingsBase
+public class AudioSlider : AudioSettings
 {
     [SerializeField] private Slider _sliderMusic, _sliderSFX;
 
