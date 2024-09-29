@@ -22,6 +22,7 @@ public class Tile : MonoBehaviour
     public float Min => _min;
     public float Max => _max;
     public int Size => _size;
+    public int ID => _id;
 
     public void Init()
     {
@@ -56,12 +57,17 @@ public class Tile : MonoBehaviour
 
     public void Release()
     {
+        TilesController.Instance.RemoveActiveTile(this);
+        Destroy(gameObject);
+    }
+
+    public void ReleaseAdd()
+    {
         MultyWallet wallet = Game.Wallet as MultyWallet;
         wallet.AddMulty(_id);
+        Game.Score.Add(Size * 5);
 
-        TilesController.Instance.RemoveActiveTile(this);
-
-        Destroy(gameObject);
+        Release();
     }
 
     private bool CanFall()

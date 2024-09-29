@@ -5,13 +5,14 @@ using UnityEngine;
 public class TilesController : MonoBehaviour
 {
     public static TilesController Instance;
-
-    
+   
     [SerializeField] private GameObject _gameOverPanel;
     [SerializeField] private Transform _content;
     [SerializeField] private TilesFactory _factory;
     [SerializeField] private TileData[] _data;
     [SerializeField] private ParticleSystem _particle;
+    [SerializeField] private ParticleSystem _sliceParticle;
+    [SerializeField] private ParticleSystem[] _typeParticles;
 
     private Coroutine _actionProcessCoroutine;
 
@@ -19,7 +20,7 @@ public class TilesController : MonoBehaviour
     private readonly Vector2 _checkSize = new(7,0.5f);
     private readonly Vector2 GameOverZone = new(0, 10);
 
-    private readonly WaitForSeconds Interval = new(.2f);
+    private readonly WaitForSeconds Interval = new(.05f);
 
     private readonly List<Tile> ActiveTile = new();
     private readonly List<Tile> PreviewTile = new();
@@ -64,6 +65,9 @@ public class TilesController : MonoBehaviour
                 int r = Random.Range(0, 1);
                 Vector2 pos = slicing[i].Transform.position + Vector3.left * 3;
 
+                _sliceParticle.transform.localPosition = slicing[i].Transform.localPosition;
+                _sliceParticle.Play();
+
                 for(int a = 0; a < 4; a++)
                 {
                     var tile = Instantiate(_factory.GetOne(r), _content);
@@ -84,31 +88,54 @@ public class TilesController : MonoBehaviour
         return false;
     }
 
+    private int GetParticle(int id)
+    {
+        return id switch
+        {
+            < 2 => 0,
+            < 5 => 1,
+            5 => 2,
+            > 5 => 3,
+        };
+    }
+
     public bool DestroyRandom()
     {
         if (ActiveTile.Count != 0)
         {
             List<Tile> destroy = new();
 
-            int r = ActiveTile[Random.Range(0, ActiveTile.Count - 1)].Size;
+            int r = ActiveTile[Random.Range(0, ActiveTile.Count - 1)].ID;
+
+            int particle = GetParticle(r);
 
 
             foreach (Tile tile in ActiveTile)
-                if (tile.Size == r)
+                if (tile.ID == r)
                     destroy.Add(tile);
 
-            for (int i = destroy.Count - 1; i >= 0; i--)
-            {
-                FallingTile.Remove(destroy[i]);
-                ActiveTile.Remove(destroy[i]);
+            _ = StartCoroutine(DestroyRandomProcess(destroy, particle));
 
-                destroy[i].Release();
-            }
-
-            AddRow();
             return true;
         }
         else return false;
+    }
+
+    private IEnumerator DestroyRandomProcess(List<Tile> destroy, int particle)
+    {
+        for (int i = destroy.Count - 1; i >= 0; i--)
+        {
+            FallingTile.Remove(destroy[i]);
+            ActiveTile.Remove(destroy[i]);
+
+            _typeParticles[particle].transform.localPosition = destroy[i].Transform.localPosition;
+            _typeParticles[particle].Play();
+
+            destroy[i].ReleaseAdd();
+            yield return Interval;
+        }
+
+        AddRow();
     }
 
     private void StartGame()
@@ -131,6 +158,18 @@ public class TilesController : MonoBehaviour
         }
 
         CreateNewRow();
+    }
+
+    private Coroutine _removeProcessCoroutine;
+    private void RemoveTile()
+    {
+        if(_removeProcessCoroutine != null)
+        {
+            StopCoroutine(_removeProcessCoroutine);
+            _removeProcessCoroutine = null;
+        }
+
+        _removeProcessCoroutine = StartCoroutine(RemoveTileProcessCoroutine());
     }
 
     private void CreateNewRow()
@@ -161,6 +200,8 @@ public class TilesController : MonoBehaviour
         {
             obj.Transform.localPosition += Vector3.up;
         }
+
+        RemoveTile();
     }
 
     private void AddFallingTile(Tile tile) => FallingTile.Add(tile);
@@ -182,16 +223,13 @@ public class TilesController : MonoBehaviour
 
         yield return Interval;
         while (FallingTile.Count != 0) yield return null;
-        yield return Interval;
+
 
         yield return RemoveTileProcessCoroutine();
 
         RiseTile();
         CreateNewRow();
 
-
-
-        yield return Interval;
         yield return RemoveTileProcessCoroutine();
         yield return Interval;
 
@@ -204,6 +242,8 @@ public class TilesController : MonoBehaviour
     {
         Vector2 pos = _startCheckPosition;
         int value;
+
+        yield return Interval;
 
         for (int i = 0; i < _countCheck; i++)
         {
@@ -264,6 +304,8 @@ public class TilesController : MonoBehaviour
             RiseTile();
             CreateNewRow();
         }
+
+        RemoveTile();
     }
 
     private void CheckGameOver()

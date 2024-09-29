@@ -7,6 +7,7 @@ public class TileIllusion : MonoBehaviour
 
     [SerializeField] private float _speed;
     [SerializeField] private Sprite _destroySprite;
+    [SerializeField] private ParticleSystem _particle;
 
     private SpriteRenderer _sprite;
     private BoxCollider2D _collider;
@@ -75,13 +76,16 @@ public class TileIllusion : MonoBehaviour
             ReleaseCoroutine();
             _collider.enabled = false;
 
+            _particle.transform.localPosition = _transform.localPosition;
+            _particle.Play();
+
             RaycastHit2D[] hit = Physics2D.BoxCastAll(_transform.position + Vector3.right * 0.5f, new Vector2(5, 5), 0, Vector2.zero);
 
             for (int i = 0; i < hit.Length; i++)
             {
                 if(hit[i].collider.TryGetComponent(out Tile tile))
                 {
-                    tile.Release();
+                    tile.ReleaseAdd();
                 }
             }
 
