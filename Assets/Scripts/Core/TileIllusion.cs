@@ -22,7 +22,7 @@ public class TileIllusion : MonoBehaviour
 
     private readonly Color ActiveColor = new(0.8f, 0.8f, 0.8f, 0.8f);
     private const float Distance = 8;
-    private bool onBlockAction;
+    public bool onBlockAction;
     private bool onGameActive = false;
     private bool onDestroy = false;
 
@@ -88,8 +88,6 @@ public class TileIllusion : MonoBehaviour
                     tile.ReleaseAdd();
                 }
             }
-
-            TilesController.Instance.AddRow();
 
             _transform.localPosition = new Vector2(0, 15);
         }

@@ -30,28 +30,22 @@ public class Tile : MonoBehaviour
         _sprite = GetComponent<SpriteRenderer>();
         Collider = GetComponent<BoxCollider2D>();
 
-        Activate();
-    }
-
-    public void Activate()
-    {
         OnAction = false;
-
-        if (_updateProcessCoroutine != null)
-        {
-            StopCoroutine(_updateProcessCoroutine);
-            _updateProcessCoroutine = null;
-        }
-        _updateProcessCoroutine = StartCoroutine(UpdateProcessCoroutine());
     }
+
+    public bool Blocking { get; set; }
 
     private void OnMouseUp()
     {
+        if (Blocking) return;
+
         Game.Action.OnEndMovement?.Invoke(this);
     }
 
     private void OnMouseDown() 
     {
+        if (Blocking) return;
+
         Game.Action.OnStartMovement?.Invoke(this);
     }
 
@@ -68,6 +62,11 @@ public class Tile : MonoBehaviour
         Game.Score.Add(Size * 5);
 
         Release();
+    }
+
+    private void OnDestroy()
+    {
+        TilesController.Instance.RemoveActiveTile(this);
     }
 
     private bool CanFall()
@@ -102,12 +101,50 @@ public class Tile : MonoBehaviour
         return canFall;
     }
 
+    private void ReleaseCoroutine()
+    {
+        if (_updateProcessCoroutine != null)
+        {
+            StopCoroutine(_updateProcessCoroutine);
+            _updateProcessCoroutine = null;
+        }
+    }
+
+    public void StartFalling()
+    {
+        ReleaseCoroutine();
+        _updateProcessCoroutine = StartCoroutine(UpdateProcessCoroutine());
+    }
+
+    public void Rise()
+    {
+        ReleaseCoroutine();
+        _updateProcessCoroutine = StartCoroutine(RiseProcess());
+    }
+
+    private IEnumerator RiseProcess()
+    {
+        TilesController.Instance.AddRiseTile(this);
+
+        Vector3 target = transform.localPosition + Vector3.up;
+        while (transform.localPosition != target)
+        {
+            transform.localPosition = Vector3.MoveTowards(transform.localPosition, target, Time.deltaTime * 5);
+            yield return null;
+        }
+
+        TilesController.Instance.RemoveRiseTile(this);
+
+        StartFalling();
+    }
+
+
     private void SendMessage(bool onAction)
     {
         if (OnAction == onAction) return;
         OnAction = onAction;
-        if (OnAction) Game.Action.OnStartFalling?.Invoke(this);
-        else Game.Action.OnEndFalling?.Invoke(this);
+        if (OnAction) TilesController.Instance.AddFallingTile(this);
+        else TilesController.Instance.RemovedFallingTile(this);
     }
 
     private IEnumerator UpdateProcessCoroutine()

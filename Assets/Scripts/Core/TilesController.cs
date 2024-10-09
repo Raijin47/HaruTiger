@@ -10,21 +10,25 @@ public class TilesController : MonoBehaviour
     [SerializeField] private Transform _content;
     [SerializeField] private TilesFactory _factory;
     [SerializeField] private TileData[] _data;
+    [SerializeField] private TileData[] _tutorialData;
     [SerializeField] private ParticleSystem _particle;
     [SerializeField] private ParticleSystem _sliceParticle;
     [SerializeField] private ParticleSystem[] _typeParticles;
 
     private Coroutine _actionProcessCoroutine;
+    private Coroutine _removeProcessCoroutine;
+
 
     private readonly Vector2 _startCheckPosition = new(0, 9);
     private readonly Vector2 _checkSize = new(7,0.5f);
     private readonly Vector2 GameOverZone = new(0, 10);
 
-    private readonly WaitForSeconds Interval = new(.05f);
+    private readonly WaitForSeconds Interval = new(.1f);
 
     private readonly List<Tile> ActiveTile = new();
     private readonly List<Tile> PreviewTile = new();
     private readonly List<Tile> FallingTile = new();
+    private readonly List<Tile> RiseTileList = new();
 
     private readonly int _countCheck = 10;
 
@@ -37,14 +41,13 @@ public class TilesController : MonoBehaviour
     {
         Game.Action.OnStartGame += StartGame;
         Game.Action.OnEndMove += StartAction;
-        Game.Action.OnStartFalling += AddFallingTile;
-        Game.Action.OnEndFalling += RemovedFallingTile;
     }
 
     public void RemoveActiveTile(Tile tile)
     {
         ActiveTile.Remove(tile);
         FallingTile.Remove(tile);
+        RiseTileList.Remove(tile);
     }
 
     public bool Slice()
@@ -61,6 +64,7 @@ public class TilesController : MonoBehaviour
             {
                 FallingTile.Remove(slicing[i]);
                 ActiveTile.Remove(slicing[i]);
+                RiseTileList.Remove(slicing[i]);
 
                 int r = Random.Range(0, 1);
                 Vector2 pos = slicing[i].Transform.position + Vector3.left * 3;
@@ -72,6 +76,7 @@ public class TilesController : MonoBehaviour
                 {
                     var tile = Instantiate(_factory.GetOne(r), _content);
                     tile.Init();
+                    tile.StartFalling();
                     ActiveTile.Add(tile);
                     tile.Collider.enabled = true;
                     pos += Vector2.right;
@@ -80,8 +85,7 @@ public class TilesController : MonoBehaviour
 
                 slicing[i].Release();
             }
-
-            AddRow();
+            RemoveTile();
             return true;
         }
 
@@ -127,6 +131,7 @@ public class TilesController : MonoBehaviour
         {
             FallingTile.Remove(destroy[i]);
             ActiveTile.Remove(destroy[i]);
+            RiseTileList.Remove(destroy[i]);
 
             _typeParticles[particle].transform.localPosition = destroy[i].Transform.localPosition;
             _typeParticles[particle].Play();
@@ -134,12 +139,36 @@ public class TilesController : MonoBehaviour
             destroy[i].ReleaseAdd();
             yield return Interval;
         }
-
-        AddRow();
     }
 
     private void StartGame()
     {
+        if(PlayerPrefs.GetInt("Tutorial", 0) != 1)
+        {
+            for (int i = 0; i < _tutorialData[0].Size.Length; i++)
+            {
+                var tile = Instantiate(_factory.GetTile(_tutorialData[0].Size[i]), _content);
+                tile.Init();
+                tile.Transform.localPosition = _tutorialData[0].Position[i];
+                ActiveTile.Add(tile);
+                tile.Collider.enabled = true;
+                tile.Blocking = i != 1;
+                tile.StartFalling();
+            }
+
+            for (int i = 0; i < _tutorialData[1].Size.Length; i++)
+            {
+                var tile = Instantiate(_factory.GetTile(_tutorialData[1].Size[i]), _content);
+                tile.Init();
+                tile.Transform.localPosition = _tutorialData[1].Position[i];
+                tile.Blocking = true;
+                PreviewTile.Add(tile);
+            }
+
+            return;
+        }
+
+
         for (int i = ActiveTile.Count - 1; i >= 0; i--)
             Destroy(ActiveTile[i].gameObject);
         
@@ -150,17 +179,24 @@ public class TilesController : MonoBehaviour
         ActiveTile.Clear();
         PreviewTile.Clear();
         FallingTile.Clear();
+        RiseTileList.Clear();
 
-        for (int i = 0; i < 3; i++)
+        CreateNewRow(Vector2.zero);
+        CreateNewRow(Vector2.up);
+        CreateNewRow(Vector2.up * 2);
+        RiseTile();
+        CreateNewRow(Vector2.zero);
+
+        if(_checkProcessCoroutine != null)
         {
-            CreateNewRow();
-            RiseTile();
+            StopCoroutine(_checkProcessCoroutine);
+            _checkProcessCoroutine = null;
         }
-
-        CreateNewRow();
+        _checkProcessCoroutine = StartCoroutine(Check());
     }
 
-    private Coroutine _removeProcessCoroutine;
+    private Coroutine _checkProcessCoroutine;
+
     private void RemoveTile()
     {
         if(_removeProcessCoroutine != null)
@@ -172,7 +208,7 @@ public class TilesController : MonoBehaviour
         _removeProcessCoroutine = StartCoroutine(RemoveTileProcessCoroutine());
     }
 
-    private void CreateNewRow()
+    private void CreateNewRow(Vector2 pos)
     {
         int random = Random.Range(0, _data.Length);
 
@@ -182,7 +218,7 @@ public class TilesController : MonoBehaviour
         {
             var tile = Instantiate(_factory.GetTile(data.Size[i]), _content);
             tile.Init();
-            tile.Transform.localPosition = data.Position[i];
+            tile.Transform.localPosition = data.Position[i] + pos;
             PreviewTile.Add(tile);
         }
     }
@@ -196,16 +232,17 @@ public class TilesController : MonoBehaviour
             PreviewTile.Remove(PreviewTile[i]);
         }
 
-        foreach (Tile obj in ActiveTile)
-        {
-            obj.Transform.localPosition += Vector3.up;
-        }
+        foreach (Tile obj in ActiveTile)       
+            obj.Rise();
 
         RemoveTile();
     }
 
-    private void AddFallingTile(Tile tile) => FallingTile.Add(tile);
-    private void RemovedFallingTile(Tile tile) => FallingTile.Remove(tile);
+    public void AddFallingTile(Tile tile) => FallingTile.Add(tile);
+    public void RemovedFallingTile(Tile tile) => FallingTile.Remove(tile);
+    public void AddRiseTile(Tile tile) => RiseTileList.Add(tile);
+    public void RemoveRiseTile(Tile tile) => RiseTileList.Remove(tile);
+
 
     private void StartAction()
     {
@@ -222,24 +259,26 @@ public class TilesController : MonoBehaviour
         Game.Action.OnBlockAction?.Invoke(true);
 
         yield return Interval;
-        while (FallingTile.Count != 0) yield return null;
+        while (FallingTile.Count != 0 | RiseTileList.Count != 0) yield return null;
 
+        yield return Interval;
 
         yield return RemoveTileProcessCoroutine();
 
         RiseTile();
-        CreateNewRow();
-
-        yield return RemoveTileProcessCoroutine();
-        yield return Interval;
+        CreateNewRow(Vector2.zero);
 
         CheckGameOver();
+
+        yield return Interval;
+        yield return RemoveTileProcessCoroutine();
 
         Game.Action.OnBlockAction?.Invoke(false);
     }
 
     private IEnumerator RemoveTileProcessCoroutine()
     {
+        Game.Action.OnBlockAction?.Invoke(true);
         Vector2 pos = _startCheckPosition;
         int value;
 
@@ -289,23 +328,28 @@ public class TilesController : MonoBehaviour
 
         yield return Interval;
 
-        if (FallingTile.Count != 0)
+        if (FallingTile.Count != 0 | RiseTileList.Count != 0)
         {
             yield return Interval;
             while (FallingTile.Count != 0) yield return null;
-            yield return RemoveTileProcessCoroutine();
+            RemoveTile();
         }
+        Game.Action.OnBlockAction?.Invoke(false);
     }
 
-    public void AddRow()
+    private IEnumerator Check()
     {
-        if(ActiveTile.Count == 0)
+        while(true)
         {
-            RiseTile();
-            CreateNewRow();
-        }
+            if (ActiveTile.Count == 0 && !TileIllusion.Instance.onBlockAction)
+            {
+                RiseTile();
+                CreateNewRow(Vector2.zero);
+                RemoveTile();
+            }
 
-        RemoveTile();
+            yield return new WaitForSeconds(2f);
+        }
     }
 
     private void CheckGameOver()
