@@ -9,7 +9,7 @@ public class Tutor : MonoBehaviour
     [SerializeField] private RectTransform _rect;
     [SerializeField] private Camera _camera;
     [SerializeField] private Transform[] _transforms;
-    [SerializeField] private RectTransform _supportTransform;
+    [SerializeField] private RectTransform _supportTransform, _firstField;
     [SerializeField] private float _scaleSpeed;
     [SerializeField] private float _movementSpeed;
 
@@ -31,20 +31,24 @@ public class Tutor : MonoBehaviour
             _rect.transform.position = _camera.WorldToScreenPoint(_transforms[0].position);
             _blockingCanvas.blocksRaycasts = true;
             _tutorialCoroutine = StartCoroutine(Step1Tutorial());
+            //_firstField.transform.position = _supportTransform.transform.position;
         }
+        else
+            _firstField.gameObject.SetActive(false);
     }
 
     private IEnumerator Step1Tutorial()
     {
         while (true)
-        {          
-            while(_rect.localScale != Vector3.one * 0.7f)
+        {
+            while (_rect.localScale != Vector3.one * 0.7f)
             {
                 yield return null;
                 _rect.localScale = Vector3.MoveTowards(_rect.localScale, Vector3.one * 0.7f, Time.deltaTime * _scaleSpeed);
             }
 
             _supportTransform.position = _camera.WorldToScreenPoint(_transforms[1].position);
+
 
             while (_rect.anchoredPosition != _supportTransform.anchoredPosition)
             {
@@ -59,6 +63,7 @@ public class Tutor : MonoBehaviour
             }
 
             _supportTransform.position = _camera.WorldToScreenPoint(_transforms[0].position);
+            _firstField.transform.position = _supportTransform.transform.position;
 
             while (_rect.anchoredPosition != _supportTransform.anchoredPosition)
             {
@@ -189,6 +194,8 @@ public class Tutor : MonoBehaviour
         if(_tutorialCoroutine != null)
         {
             StopCoroutine(_tutorialCoroutine);
+            _supportTransform.gameObject.SetActive(false);
+            _firstField.gameObject.SetActive(false);
             _tutorialCoroutine = null;
         }
     }
