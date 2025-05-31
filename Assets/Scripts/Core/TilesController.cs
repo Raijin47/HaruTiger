@@ -74,7 +74,9 @@ public class TilesController : MonoBehaviour
 
                 for(int a = 0; a < 4; a++)
                 {
-                    var tile = Instantiate(_factory.GetOne(r), _content);
+                    var one = _factory.GetOne(r);
+                    print(one);
+                    var tile = Instantiate(one, _content);
                     tile.Init();
                     tile.StartFalling();
                     ActiveTile.Add(tile);
@@ -135,7 +137,7 @@ public class TilesController : MonoBehaviour
 
             _typeParticles[particle].transform.localPosition = destroy[i].Transform.localPosition;
             _typeParticles[particle].Play();
-
+ 
             destroy[i].ReleaseAdd();
             yield return Interval;
         }
@@ -143,11 +145,14 @@ public class TilesController : MonoBehaviour
 
     private void StartGame()
     {
-        if(PlayerPrefs.GetInt("Tutorial", 0) != 1)
+        if(PlayerPrefs.GetInt("Tutorial", 1) != 1)
         {
             for (int i = 0; i < _tutorialData[0].Size.Length; i++)
             {
-                var tile = Instantiate(_factory.GetTile(_tutorialData[0].Size[i]), _content);
+
+                var prefab = _factory.GetTile(_tutorialData[0].Size[i]);
+                print(prefab + ":" + _tutorialData[0].Size[i]);
+                var tile = Instantiate(prefab, _content);
                 tile.Init();
                 tile.Transform.localPosition = _tutorialData[0].Position[i];
                 ActiveTile.Add(tile);
@@ -246,6 +251,7 @@ public class TilesController : MonoBehaviour
 
     private void StartAction()
     {
+        print("endMove");
         if(_actionProcessCoroutine != null)
         {
             StopCoroutine(_actionProcessCoroutine);

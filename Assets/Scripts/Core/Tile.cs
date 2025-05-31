@@ -11,7 +11,7 @@ public class Tile : MonoBehaviour
     private SpriteRenderer _sprite;
     private Coroutine _updateProcessCoroutine;
     private RaycastHit2D[] _collision;
-
+     
     private const float _fallingSpeed = 5;
 
     public Transform Transform { get; private set; }
@@ -34,11 +34,17 @@ public class Tile : MonoBehaviour
     }
 
     public bool Blocking { get; set; }
+    public bool _blocking;
+
+    private void Update()
+    {
+        _blocking = Blocking;
+    }
 
     private void OnMouseUp()
     {
         if (Blocking) return;
-
+        print("up :" +  gameObject);
         Game.Action.OnEndMovement?.Invoke(this);
     }
 
@@ -46,6 +52,7 @@ public class Tile : MonoBehaviour
     {
         if (Blocking) return;
 
+         
         Game.Action.OnStartMovement?.Invoke(this);
     }
 

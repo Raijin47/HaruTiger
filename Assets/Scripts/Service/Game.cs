@@ -13,8 +13,8 @@ public class Game : MonoBehaviour
     [SerializeReference, SubclassSelector] private Wallet _walletType;
     [SerializeReference, SubclassSelector] private AudioSettings _audioType;
 
-    //[Space(10)]
-    //[SerializeReference, SubclassSelector] private List<Component> _components;
+    [Space(10)]
+    [SerializeReference, SubclassSelector] private List<Component> _components;
 
     private readonly GameScore GameScore = new();
     private readonly GameAction GameAction = new();
@@ -42,15 +42,15 @@ public class Game : MonoBehaviour
         GameScore.Init();
         _audio.Init();
 
-        //foreach(Component component in _components)   
-        //    component.Init();
-        
+        foreach (Component component in _components)
+            component.Init();
+
     }
 
-    //public T Get<T>() where T : Component
-    //{
-    //    return (T)_components.FirstOrDefault(item => item is T);
-    //}
+    public T Get<T>() where T : Component
+    {
+        return (T)_components.FirstOrDefault(item => item is T);
+    }
 
     public void StartGame() => Action.OnStartGame?.Invoke();
     public void GameOver() => Action.OnGameOver?.Invoke();

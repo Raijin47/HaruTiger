@@ -18,7 +18,7 @@ public class TilesFactory
             2 => _x2[Random.Range(0, _x2.Length)],
             3 => _x3[Random.Range(0, _x3.Length)],
             4 => _x4,
-            _ => throw new NotImplementedException()
+            _ => _x1[Random.Range(0, _x1.Length)]
         };
     }
 

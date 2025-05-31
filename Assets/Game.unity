@@ -37845,7 +37845,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -43754,10 +43754,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 126d8dd79a5e8e64ba89f2dc573be8fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _speed: 10
-  _destroySprite: {fileID: 21300000, guid: 352add5a677765e43b7f23773c9c27d4, type: 3}
-  _particle: {fileID: 1259273732}
-  onBlockAction: 0
 --- !u!61 &1799906247
 BoxCollider2D:
   m_ObjectHideFlags: 0
